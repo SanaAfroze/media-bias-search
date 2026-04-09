@@ -48,7 +48,7 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      setError("Connection failed. Ensure Backend is running on Port 5002.");
+      setError("Connection failed. Ensure Backend is running.");
     } finally {
       setLoading(false);
     }
@@ -70,8 +70,8 @@ function App() {
     if (!reportData) return;
     setIsSaving(true);
     try {
-        // FIXED: Port changed to 5002 and URL matches app_rss.py
-        await axios.post('http://localhost:5002/api/save', {
+        // Port for the save logic
+        await axios.post('https://sanaafroze.pythonanywhere.com/api/save', {
             topic: reportData.metadata.topic,
             from_date: reportData.metadata.from_date,
             to_date: reportData.metadata.to_date,
