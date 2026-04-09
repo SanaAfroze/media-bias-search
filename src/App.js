@@ -29,7 +29,7 @@ function App() {
     setIsSaved(false);
 
     try {
-      const response = await axios.post('https://sanaafroze.pythonanywhere.com/api/analyze', {
+      const response = await axios.post('https://sanaafroze2.pythonanywhere.com/api/analyze', {
         topic: searchTerm,
         from_date: fromDate,
         to_date: toDate,
@@ -70,8 +70,8 @@ function App() {
     if (!reportData) return;
     setIsSaving(true);
     try {
-        // Port for the save logic
-        await axios.post('https://sanaafroze.pythonanywhere.com/api/save', {
+        // Port for the save logic /home/sanaafroze2/mysite
+        await axios.post('https://sanaafroze2.pythonanywhere.com/api/save', {
             topic: reportData.metadata.topic,
             from_date: reportData.metadata.from_date,
             to_date: reportData.metadata.to_date,
