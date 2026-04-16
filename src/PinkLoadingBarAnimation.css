@@ -1,0 +1,71 @@
+/* PinkBarsLoader.css */
+
+/* Container and background (using generic terms to defer to system styling) */
+.progressive-disclosure-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Add your specific dark background color/image here if not set elsewhere */
+    /* background-color: #0d001a; */
+    padding: 2rem;
+    border-radius: 8px; /* Optional rounded edges for the container */
+  }
+  
+  /* The animated bars container */
+  .pink-bars-loader {
+    display: flex;
+    gap: 6px; /* Spacing between bars */
+    align-items: flex-end; /* Bars start from the bottom */
+    height: 50px; /* Fixed container height so bars don't jump */
+  }
+  
+  /* A single bar */
+  .pink-bars-loader .bar {
+    width: 6px;
+    height: 40px; /* Default height */
+    /* Functional color specification - downstream handles specific pink */
+    background-color: pink;
+    border-radius: 3px; /* Rounded rectangles */
+    animation: optimistic-ui-dance 1s ease-in-out infinite;
+    transform-origin: bottom; /* Crucial: ensures bars scale upward, not centered */
+  }
+  
+  /* Define the "dancing" animation: scaling the transform over 1s */
+  @keyframes optimistic-ui-dance {
+    0%, 100% {
+      transform: scaleY(0.4); /* Contracted state */
+    }
+    50% {
+      transform: scaleY(1); /* Expanded state */
+    }
+  }
+  
+  /* Individual delays create the sequential, dancing effect */
+  .pink-bars-loader .bar:nth-child(1) { animation-delay: 0s; }
+  .pink-bars-loader .bar:nth-child(2) { animation-delay: 0.1s; }
+  .pink-bars-loader .bar:nth-child(3) { animation-delay: 0.2s; }
+  .pink-bars-loader .bar:nth-child(4) { animation-delay: 0.3s; }
+  .pink-bars-loader .bar:nth-child(5) { animation-delay: 0.4s; }
+  
+  /* Styling for the text - defer specific styling (color, font) */
+  .progressive-status-text {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  
+  /* Apply a pulse effect to the text as well for consistency */
+  .progressive-status-text.pulse {
+    animation: status-pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes status-pulse {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
