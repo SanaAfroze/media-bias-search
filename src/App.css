@@ -744,7 +744,8 @@
   cursor: pointer;
   text-decoration: underline;
 }
-* --- Progressive Disclosure Styles --- */
+
+/* --- Progressive Disclosure Styles --- */
 
 .reveal-container {
   display: flex;
