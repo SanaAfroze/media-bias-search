@@ -744,3 +744,59 @@
   cursor: pointer;
   text-decoration: underline;
 }
+* --- Progressive Disclosure Styles --- */
+
+.reveal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 2rem 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.reveal-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.reveal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+.reveal-status {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #a0aec0;
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+.reveal-status.complete {
+  color: #10b981;
+  animation: none;
+  font-style: normal;
+  font-weight: bold;
+}
+
+.loader.secondary {
+  font-size: 1rem;
+  color: #8b5cf6;
+  margin: 2rem auto;
+  width: fit-content;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
