@@ -50,7 +50,7 @@ function App() {
     wantsEmailSurvey: false
   });
   const [isProfileSaved, setIsProfileSaved] = useState(false);
-  const [_authToken, setAuthToken] = useState(localStorage.getItem('authToken') || null);
+  const [, setAuthToken] = useState(localStorage.getItem('authToken') || null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if user is logged in on mount
