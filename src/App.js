@@ -554,3 +554,4 @@ const SpectrumRow = ({ label, data }) => {
 };
 
 export default App;
+
