@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import './App.css';
 import PinkLoadingBarAnimation from './PinkLoadingBarAnimation';
+
 // USE YOUR PYTHONANYWHERE URL IN PRODUCTION
 const API_BASE = "https://sanaafroze2.pythonanywhere.com";
 // const API_BASE = "http://localhost:5002";
+
+// Set up axios to include auth token in all requests
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = token;
+  }
+  return config;
+});
 
 function App() {
   const [query, setQuery] = useState('');
@@ -29,6 +39,36 @@ function App() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Profile & Auth States
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    age: '',
+    fieldOfStudy: '',
+    politicalSpectrum: '',
+    emailForSurvey: '',
+    wantsEmailSurvey: false
+  });
+  const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [authToken, setAuthToken] = useState(localStorage.getItem('authToken') || null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const savedProfile = localStorage.getItem('userProfile');
+    
+    if (token) {
+      setAuthToken(token);
+      setIsLoggedIn(true);
+    }
+    
+    if (savedProfile) {
+      setUserProfile(JSON.parse(savedProfile));
+      setIsProfileSaved(true);
+    }
+  }, []);
+
   const performSearch = async (searchTerm, forceExact = false) => {
     if (!searchTerm) return;
     
@@ -43,7 +83,6 @@ function App() {
     setIsSaved(false);
 
     try {
-      // 1. Trigger the Basic Analysis (Scraping + Pros/Cons)
       const basicResponse = await axios.post(`${API_BASE}/api/basic_analysis`, {
         topic: searchTerm,
         from_date: fromDate,
@@ -56,7 +95,10 @@ function App() {
       // Handle DB Cache Hit
       if (data.is_cached) {
         setBasicData({
-          analysis: { advantages: data.full_report.analysis.advantages, disadvantages: data.full_report.analysis.disadvantages },
+          analysis: { 
+            arguments_in_favor: data.full_report.analysis.arguments_in_favor, 
+            arguments_opposed: data.full_report.analysis.arguments_opposed 
+          },
           metadata: data.full_report.metadata,
           sources: data.full_report.sources
         });
@@ -73,9 +115,9 @@ function App() {
         setFromDate(data.metadata.from_date);
         setToDate(data.metadata.to_date);
       }
-      setIsBasicLoading(false); // First part is done, show UI!
+      setIsBasicLoading(false);
 
-      // 2. Trigger Background Deep Analysis using the context
+      // Trigger Background Deep Analysis
       fetchDeepAnalysis(data.context_text);
 
     } catch (err) {
@@ -115,11 +157,10 @@ function App() {
     if (!basicData || !deepData) return;
     setIsSaving(true);
     
-    // Assemble the full report exactly as the DB expects it
     const fullReportToSave = {
         analysis: {
-            advantages: basicData.analysis ? basicData.analysis.advantages : basicData.basic_analysis.advantages,
-            disadvantages: basicData.analysis ? basicData.analysis.disadvantages : basicData.basic_analysis.disadvantages,
+            arguments_in_favor: basicData.analysis ? basicData.analysis.arguments_in_favor : basicData.basic_analysis.arguments_in_favor,
+            arguments_opposed: basicData.analysis ? basicData.analysis.arguments_opposed : basicData.basic_analysis.arguments_opposed,
             perspectives: deepData
         },
         metadata: basicData.metadata,
@@ -142,9 +183,101 @@ function App() {
     }
   };
 
-  // Helper variable to access the correct pros/cons array based on fresh vs cached structure
-  const advantagesList = basicData?.analysis?.advantages || basicData?.basic_analysis?.advantages || [];
-  const disadvantagesList = basicData?.analysis?.disadvantages || basicData?.basic_analysis?.disadvantages || [];
+  // Profile Handler Functions
+  const handleProfileSave = async () => {
+    // Validation
+    if (!userProfile.name.trim()) {
+      alert('Name is required!');
+      return;
+    }
+
+    if (userProfile.wantsEmailSurvey && !userProfile.emailForSurvey.trim()) {
+      alert('Email is required if you want to receive surveys!');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_BASE}/api/profile/save`, userProfile);
+      
+      if (response.data.status === 'success') {
+        // Save to localStorage as backup
+        localStorage.setItem('userProfile', JSON.stringify({
+          ...userProfile,
+          profileId: response.data.profile_id
+        }));
+        
+        // Save auth token
+        const token = response.data.token;
+        setAuthToken(token);
+        setIsLoggedIn(true);
+        localStorage.setItem('authToken', token);
+        
+        setIsProfileSaved(true);
+        setShowProfileModal(false);
+        alert(response.data.message);
+      }
+    } catch (err) {
+      console.error('Profile save error:', err);
+      if (err.response?.data?.error) {
+        alert(err.response.data.error);
+      } else {
+        alert('Failed to save profile. Please try again.');
+      }
+    }
+  };
+  
+  const handleProfileChange = (field, value) => {
+    setUserProfile(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  const openProfileModal = () => {
+    // Load from localStorage if exists
+    const saved = localStorage.getItem('userProfile');
+    if (saved) {
+      setUserProfile(JSON.parse(saved));
+      setIsProfileSaved(true);
+    }
+    setShowProfileModal(true);
+  };
+
+  const handleDeleteProfile = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your profile? This action cannot be undone.'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      await axios.post(`${API_BASE}/api/profile/delete`);
+      
+      // Clear local data
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('authToken');
+      setUserProfile({
+        name: '',
+        age: '',
+        fieldOfStudy: '',
+        politicalSpectrum: '',
+        emailForSurvey: '',
+        wantsEmailSurvey: false
+      });
+      setIsProfileSaved(false);
+      setIsLoggedIn(false);
+      setAuthToken(null);
+      setShowProfileModal(false);
+      
+      alert('Profile deleted successfully');
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Failed to delete profile. Please try again.');
+    }
+  };
+
+  const argumentsInFavorList = basicData?.analysis?.arguments_in_favor || basicData?.basic_analysis?.arguments_in_favor || [];
+  const argumentsOpposedList = basicData?.analysis?.arguments_opposed || basicData?.basic_analysis?.arguments_opposed || [];
 
   return (
     <div className="app-container">
@@ -204,26 +337,36 @@ function App() {
           <motion.div className="report-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             
             <div className="report-header-row">
-                <div className="header-titles">
-                    <h2>Executive Summary: {basicData.metadata.topic}</h2>
-                    <div className="meta-badge">
-                        📅 {basicData.metadata.from_date} to {basicData.metadata.to_date}
-                    </div>
-                </div>
+              <div className="header-titles">
+                  <h2>Executive Summary: {basicData.metadata.topic}</h2>
+                  <div className="meta-badge">
+                      📅 {basicData.metadata.from_date} to {basicData.metadata.to_date}
+                  </div>
+              </div>
 
-                <button 
-                    className={`save-action-btn ${isSaved ? 'saved' : ''}`} 
-                    onClick={handleSave}
-                    disabled={isSaved || isSaving || !deepData} // Disable save if deepData isn't ready
-                >
-                    {isSaving ? 'Saving...' : isSaved ? '✅ Saved' : '💾 Save'}
-                </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                      className="profile-btn" 
+                      onClick={openProfileModal}
+                      title="User Profile"
+                  >
+                      👤 {isLoggedIn ? 'Profile' : 'Sign Up'}
+                  </button>
+
+                  <button 
+                      className={`save-action-btn ${isSaved ? 'saved' : ''}`} 
+                      onClick={handleSave}
+                      disabled={isSaved || isSaving || !deepData}
+                  >
+                      {isSaving ? 'Saving...' : isSaved ? '✅ Saved' : '💾 Save'}
+                  </button>
+              </div>
             </div>
 
             <div className="grid-2">
               <div className="card adv">
-                <h3>Advantages</h3>
-                {advantagesList.map((item, idx) => (
+                <h3>Arguments in Favor</h3>
+                {argumentsInFavorList.map((item, idx) => (
                   <div key={idx} className="point-item">
                     <h4>{item.heading}</h4>
                     <p>{item.context}</p>
@@ -232,8 +375,8 @@ function App() {
                 ))}
               </div>
               <div className="card dis">
-                <h3>Disadvantages</h3>
-                {disadvantagesList.map((item, idx) => (
+                <h3>Arguments Opposed</h3>
+                {argumentsOpposedList.map((item, idx) => (
                   <div key={idx} className="point-item">
                     <h4>{item.heading}</h4>
                     <p>{item.context}</p>
@@ -243,7 +386,6 @@ function App() {
               </div>
             </div>
 
-            {/* PROGRESSIVE DISCLOSURE UI */}
             {!showDeepAnalysis ? (
                 <div className="reveal-container">
                     <button className="reveal-btn" onClick={() => setShowDeepAnalysis(true)}>
@@ -275,6 +417,105 @@ function App() {
           </motion.div>
         )}
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>User Profile</h2>
+            
+            <div className="profile-form">
+              <div className="form-field">
+                <label>Name: *</label>
+                <input 
+                  type="text" 
+                  value={userProfile.name}
+                  onChange={(e) => handleProfileChange('name', e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Age:</label>
+                <input 
+                  type="number" 
+                  value={userProfile.age}
+                  onChange={(e) => handleProfileChange('age', e.target.value)}
+                  placeholder="Enter your age"
+                  min="13"
+                  max="120"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Field of Study:</label>
+                <input 
+                  type="text" 
+                  value={userProfile.fieldOfStudy}
+                  onChange={(e) => handleProfileChange('fieldOfStudy', e.target.value)}
+                  placeholder="e.g., Computer Science, Medicine"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Political Spectrum:</label>
+                <select 
+                  value={userProfile.politicalSpectrum}
+                  onChange={(e) => handleProfileChange('politicalSpectrum', e.target.value)}
+                >
+                  <option value="">Select your position</option>
+                  <option value="extreme_left">Extreme Left</option>
+                  <option value="left_leaning">Left Leaning</option>
+                  <option value="neutral">Neutral</option>
+                  <option value="right_leaning">Right Leaning</option>
+                  <option value="extreme_right">Extreme Right</option>
+                </select>
+              </div>
+
+              <div className="form-field checkbox-field">
+                <label>
+                  <input 
+                    type="checkbox"
+                    checked={userProfile.wantsEmailSurvey}
+                    onChange={(e) => handleProfileChange('wantsEmailSurvey', e.target.checked)}
+                  />
+                  I would like to receive surveys via email
+                </label>
+              </div>
+
+              {userProfile.wantsEmailSurvey && (
+                <div className="form-field">
+                  <label>Email Address: *</label>
+                  <input 
+                    type="email" 
+                    value={userProfile.emailForSurvey}
+                    onChange={(e) => handleProfileChange('emailForSurvey', e.target.value)}
+                    placeholder="your.email@example.com"
+                    required={userProfile.wantsEmailSurvey}
+                  />
+                </div>
+              )}
+
+              <div className="modal-buttons">
+                <button className="btn-save" onClick={handleProfileSave}>
+                  {isProfileSaved ? 'Update Profile' : 'Save Profile'}
+                </button>
+                
+                {isProfileSaved && isLoggedIn && (
+                  <button className="btn-delete" onClick={handleDeleteProfile}>
+                    Delete Profile
+                  </button>
+                )}
+                
+                <button className="btn-cancel" onClick={() => setShowProfileModal(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
