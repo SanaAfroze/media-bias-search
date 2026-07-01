@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import './App.css';
 import PinkLoadingBarAnimation from './PinkLoadingBarAnimation';
 
-// USE YOUR PYTHONANYWHERE URL IN PRODUCTION
+// PYTHONANYWHERE URL IN PRODUCTION
 const API_BASE = "https://sanaafroze2.pythonanywhere.com";
 // const API_BASE = "http://localhost:5002";
 
