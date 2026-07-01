@@ -53,7 +53,7 @@ function App() {
     password: '',
     wantsLocalStorage: false
   });
-  const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [, setIsProfileSaved] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [authToken, setAuthToken] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
