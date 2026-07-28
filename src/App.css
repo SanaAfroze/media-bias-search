@@ -923,3 +923,28 @@
   margin-bottom: 20px;
   font-weight: 600;
 }
+
+/* Search bar row - wraps search form and sign in button together */
+.search-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 950px;
+}
+
+/* Make search form take remaining space */
+.search-bar-row .search-form {
+  flex: 1;
+}
+
+/* Adjust profile button for both landing and top bar */
+.search-wrapper.centered .profile-btn {
+  white-space: nowrap;
+  height: 44px;
+}
+
+.search-wrapper.top-bar .profile-btn {
+  white-space: nowrap;
+  height: 44px;
+}
