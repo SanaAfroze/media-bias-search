@@ -43,7 +43,7 @@ function App() {
 
   // Auth & Profile States
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [authMode, setAuthMode] = useState('signup'); // 'signup' or 'login'
+  const [authMode, setAuthMode] = useState('login'); // 'signup' or 'login'
   const [userProfile, setUserProfile] = useState({
     name: '',
     gender: '',
@@ -205,7 +205,7 @@ function App() {
     if (isLoggedIn) {
       setAuthMode('loggedin');
     } else {
-      setAuthMode('signup'); // Show Sign Up first by default
+      setAuthMode('login'); // Show Sign In first by default
     }
     setShowProfileModal(true);
   };
@@ -390,42 +390,53 @@ function App() {
           Media<span className="accent">Truth</span>
         </h1>
 
-        <form onSubmit={handleSearch} className="search-form">
-          <div className="search-capsule">
-            <div className="capsule-section topic-section">
-              <span className="icon">🔍</span>
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Enter Topic..."
-                className="capsule-input"
-              />
-            </div>
-            <div className="capsule-divider"></div>
-            <div className="capsule-section date-section">
-              <span className="icon">📅</span>
-              <div className="date-inputs">
+        <div className="search-bar-row">
+          <form onSubmit={handleSearch} className="search-form">
+            <div className="search-capsule">
+              <div className="capsule-section topic-section">
+                <span className="icon">🔍</span>
                 <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="capsule-date"
-                />
-                <span className="date-arrow">→</span>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="capsule-date"
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Enter Topic..."
+                  className="capsule-input"
                 />
               </div>
+              <div className="capsule-divider"></div>
+              <div className="capsule-section date-section">
+                <span className="icon">📅</span>
+                <div className="date-inputs">
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="capsule-date"
+                  />
+                  <span className="date-arrow">→</span>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="capsule-date"
+                  />
+                </div>
+              </div>
+              <button type="submit" className="capsule-btn">Analyze</button>
             </div>
-            <button type="submit" className="capsule-btn">Analyze</button>
-          </div>
-        </form>
-      </motion.div>
+          </form>
 
+          {/* Sign In / Profile button always visible next to search */}
+          <button
+            className="profile-btn"
+            onClick={openProfileModal}
+            title="User Profile"
+          >
+            {isLoggedIn ? `👤 ${loggedInUser}` : '🔐 Sign In'}
+          </button>
+        </div>
+
+      </motion.div>
       <div className="content-area">
         {isBasicLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -467,14 +478,6 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  className="profile-btn"
-                  onClick={openProfileModal}
-                  title="User Profile"
-                >
-                  {isLoggedIn ? `👤 ${loggedInUser}` : '🔐 Sign In'}
-                </button>
-
                 <button
                   className={`save-action-btn ${isSaved ? 'saved' : ''}`}
                   onClick={handleSave}
